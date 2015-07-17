@@ -8,87 +8,137 @@ output:
 
 ## Loading and preprocessing the data
 
-```{r readingcsv,echo = TRUE}
+
+```r
 library(dplyr)
 library(ggplot2)
 
 data<-read.csv("./activity.csv")
-
 ```
 
 ## What is mean total number of steps taken per day?
 
 Calculating the total number of steps taken per day:
-```{r totalsteps,echo=TRUE}
+
+```r
 TotalSteps<-summarise(group_by(data,date),StepSum=sum(steps,na.rm=T))
 ```
 Building a histogram of the total number of steps taken each day
-```{r Histogram,fig.height=4,echo=TRUE}
+
+```r
 hist(TotalSteps$StepSum, col="blue", main="Number of steps per day", xlab="Total number of steps per day")
 ```
 
+![plot of chunk Histogram](figure/Histogram-1.png) 
+
 Mean of the total number of steps taken per day:
-```{r Mean,echo=TRUE}
+
+```r
 meanSteps<-mean(TotalSteps$StepSum)
 print(meanSteps)
 ```
+
+```
+## [1] 9354.23
+```
 Median of the total number of steps taken per day:
-```{r Median,echo=TRUE}
+
+```r
 medSteps<-median(TotalSteps$StepSum)
 print(medSteps)
+```
+
+```
+## [1] 10395
 ```
 
 ## What is the average daily activity pattern?
 
 Calculating average number of steps taken in 5-minute interval and adding it to the main dataset:
-```{r averageSteps,echo=TRUE}
+
+```r
 AverageSteps<-summarise(group_by(data,interval),Mean=mean(steps,na.rm=T))
 ```
 Building a plot of the 5-minute interval and the average number of steps taken:
-```{r 5minutePlot,echo=TRUE}
+
+```r
 with(AverageSteps,plot(interval,Mean,type="l",xlab="5-minute interval",ylab="Average number of steps taken"))
 ```
 
+![plot of chunk 5minutePlot](figure/5minutePlot-1.png) 
+
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
-```{r avMaxSteps,echo=TRUE}
+
+```r
 AverageSteps<-arrange(AverageSteps,desc(Mean))
 AverageSteps$interval[1]
+```
+
+```
+## [1] 835
 ```
 
 ## Imputing missing values
 
 Calculating the total number of missing values in the dataset
-```{r NAs,echo=TRUE}
+
+```r
 sum(is.na(data))
 ```
+
+```
+## [1] 2304
+```
 Creating a new dataset that is equal to the original dataset but with the missing data filled in.
-```{r newdata,echo=TRUE}
+
+```r
 dataNAreplaced<-merge(data,AverageSteps,all=T)
 dataNAreplaced$steps[is.na(dataNAreplaced$steps)]<-dataNAreplaced$Mean[is.na(dataNAreplaced$steps)]
 dataNAreplaced$Mean<-NULL
 ```
 Building a histogram of the total number of steps taken each day
-```{r newTotalsteps,echo=TRUE}
+
+```r
 NTotalSteps<-summarise(group_by(dataNAreplaced,date),StepSum=sum(steps,na.rm=T))
 hist(NTotalSteps$StepSum, col="blue", main="Number of steps per day, NA replaced with mean on 5-minute interval", xlab="Total number of steps per day")
 ```
 
+![plot of chunk newTotalsteps](figure/newTotalsteps-1.png) 
+
 Mean of the total number of steps taken per day:
-```{r Mean2,echo=TRUE}
+
+```r
 meanSteps_2<-mean(NTotalSteps$StepSum)
 print(meanSteps_2)
 ```
+
+```
+## [1] 10766.19
+```
 Median of the total number of steps taken per day:
-```{r Median2,echo=TRUE}
+
+```r
 medSteps_2<-median(NTotalSteps$StepSum)
 print(medSteps_2)
+```
+
+```
+## [1] 10766.19
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 Adding a column with factor variable indicating weekday/weekend
-```{r weekdays,echo=TRUE}
+
+```r
 Sys.setlocale("LC_TIME", "English")
+```
+
+```
+## [1] "English_United States.1252"
+```
+
+```r
 data$date<-as.POSIXct(data$date)
 data$weekday<-weekdays(data$date)
 week<-data$weekday=="Saturday"|data$weekday=="Sunday"
@@ -97,11 +147,15 @@ data$weekday[!week]<-"Weekday"
 data$weekday<-as.factor(data$weekday)
 ```
 Adding column with average number of steps taken, averaged across all weekday days or weekend days
-```{r averageWeekdays,echo=TRUE}
+
+```r
 AverageStepsW<-summarise(group_by(data,weekday,interval),MeanWeekday=mean(steps,na.rm=T))
 ```
 Building plot of the 5-minute interval and the average number of steps taken.
-```{r plotWeekday, echo=TRUE}
+
+```r
 g<-ggplot(AverageStepsW,aes(x=interval,y=MeanWeekday))
 g+geom_line()+facet_wrap(~weekday,nrow=2,ncol=1)+labs(x="5-minute interval",y="Average number of steps per day")
 ```
+
+![plot of chunk plotWeekday](figure/plotWeekday-1.png) 
